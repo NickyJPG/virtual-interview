@@ -91,7 +91,7 @@
 </div>
 
 <script>
-/* Profile & Copy */
+/* ===== Profile & Copy ===== */
 const PROFILE={
   name:'Nick John',
   email:'mailto:nicholas.john@mail.com?subject=Reaching%20out%20from%20your%20QR',
@@ -113,13 +113,13 @@ const QNA=[
  {id:'contact', q:'How do we follow up?', a:'Use the buttons below — email, LinkedIn, or download my CV. Happy to share case studies and references.'}
 ];
 
-/* Canvas setup */
+/* ===== Canvas setup ===== */
 const c=document.getElementById('game');
 const ctx=c.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const T=16, W=20, H=15; // 320x240
 
-/* Map */
+/* ===== Map (0=floor, 1=wall, 2=desk, 3=bookshelf, 4=vending, 5=plant, 6=cabinet, 7=chair) ===== */
 const MAP=[
  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
  1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,6,0,5,0,1,
@@ -151,7 +151,7 @@ function drawCabinet(x,y){ ctx.fillStyle='#3b4a6b'; ctx.fillRect(x*T+1,y*T+1,T-2
 function drawChair(x,y){ ctx.fillStyle='#2a2f4a'; ctx.fillRect(x*T+3,y*T+9,10,6); ctx.fillStyle='#1f2440'; ctx.fillRect(x*T+5,y*T+6,6,3); }
 function drawTile(x,y,t){ drawFloor(x,y); if(t===1) drawWall(x,y); if(t===2) drawDesk(x,y); if(t===3) drawShelf(x,y); if(t===4) drawVending(x,y); if(t===5) drawPlant(x,y); if(t===6) drawCabinet(x,y); if(t===7) drawChair(x,y); }
 
-/* Sprites */
+/* ===== Sprites with idle blink and bounce ===== */
 const player={x:5*T,y:8*T,dir:'down',speed:1.2,blinkOn:false};
 const npc={x:12*T,y:8*T,dir:'left',blinkOn:false};
 
@@ -169,24 +169,59 @@ function drawChibi(kind,x,y,dir,blinkOn,tick){
   ctx.fillStyle='#000'; ctx.fillRect(x+4+step,y+22-bob,3,2); ctx.fillRect(x+9-step,y+22-bob,3,2);
 }
 
-/* Dialog & Menu */
+/* ===== Dialog & Menu ===== */
 let mode='walk'; // walk | menu | dialog
 let menuIndex=0; let answered={};
 let dialog=null; // {pages:[{s,t}], p, i, done}
 let justClosedDialog=false;
-let introActive=false; // NEW: true only for the very first line
+let introActive=false; // first line only
 
 function openMenu(){ mode='menu'; menuIndex=0; playSfx('menu'); }
 function closeMenu(){ mode='walk'; playSfx('back'); }
 function startQA(item){ dialog={pages:[{s:'Interviewer',t:item.q},{s:PROFILE.name,t:item.a}],p:0,i:0,done:false}; mode='dialog'; answered[item.id||item.q]=true; saveState(); playSfx('select'); }
 
-function drawMenu(){ const w=c.width-60,h=QNA.length*16+28,x=30,y=24; ctx.fillStyle='rgba(0,0,0,.9)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#d9e7ff'; ctx.font='12px monospace'; ctx.fillText('Choose a topic', x+10, y+16); QNA.forEach((it,i)=>{ const yy=y+30+i*16; ctx.fillStyle=i===menuIndex?'#ffd166':'#d9e7ff'; ctx.fillText((i===menuIndex?'> ':'  ')+it.q, x+10, yy); }); const count=Object.keys(answered).length+'/'+QNA.length; ctx.fillStyle='#9fb6d6'; ctx.fillText(count, x+w-34, y+16); }
+/* ===== Dialogue drawing with different font sizes ===== */
+const LABEL_FONT='12px monospace';   // unchanged
+const TEXT_FONT='11px monospace';    // slightly smaller to avoid clipping
 
-function drawDialog(){ const x=6,y=c.height-78,w=c.width-12,h=72; ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#fff'; ctx.font='12px monospace'; const pg=dialog.pages[dialog.p]; ctx.fillText(pg.s+':', x+8, y+16); wrapText(pg.t.slice(0,dialog.i), x+8, y+30, w-16, 14); if(dialog.done){ const t=Date.now()>>7; if(t%2) ctx.fillText('▶', x+w-22, y+h-10); } }
+function drawMenu(){
+  const w=c.width-60,h=QNA.length*16+28,x=30,y=24;
+  ctx.fillStyle='rgba(0,0,0,.9)'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2);
+  ctx.fillStyle='#d9e7ff'; ctx.font='12px monospace';
+  ctx.fillText('Choose a topic', x+10, y+16);
+  QNA.forEach((it,i)=>{ const yy=y+30+i*16; ctx.fillStyle=i===menuIndex?'#ffd166':'#d9e7ff'; ctx.fillText((i===menuIndex?'> ':'  ')+it.q, x+10, yy); });
+  const count=Object.keys(answered).length+'/'+QNA.length; ctx.fillStyle='#9fb6d6'; ctx.fillText(count, x+w-34, y+16);
+}
 
-function wrapText(t,x,y,maxW,lh){ const words=t.split(' '); let line=''; for(const w of words){const test=line+w+' '; if(ctx.measureText(test).width>maxW){ ctx.fillText(line,x,y); line=w+' '; y+=lh; } else line=test;} ctx.fillText(line,x,y); }
+function drawDialog(){
+  const x=6,y=c.height-78,w=c.width-12,h=72;
+  ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2);
+  const pg=dialog.pages[dialog.p];
 
-/* Controls */
+  // Speaker label
+  ctx.fillStyle='#fff';
+  ctx.font = LABEL_FONT;
+  ctx.fillText(pg.s+':', x+8, y+16);
+
+  // Spoken text (slightly smaller)
+  ctx.font = TEXT_FONT;
+  wrapText(pg.t.slice(0,dialog.i), x+8, y+30, w-16, 14);
+  if(dialog.done){ const t=Date.now()>>7; if(t%2) ctx.fillText('▶', x+w-22, y+h-10); }
+}
+
+function wrapText(t,x,y,maxW,lh){
+  const words=t.split(' '); let line='';
+  for(const w of words){
+    const test=line+w+' ';
+    if(ctx.measureText(test).width>maxW){ ctx.fillText(line,x,y); line=w+' '; y+=lh; }
+    else line=test;
+  }
+  ctx.fillText(line,x,y);
+}
+
+/* ===== Controls ===== */
 const keys=Object.create(null);
 
 function dismissIntroIfActive(){
@@ -196,25 +231,42 @@ function dismissIntroIfActive(){
 }
 
 window.addEventListener('keydown',e=>{
-  // Any key during the very first intro line dismisses it
+  // Any meaningful keypress dismisses the very first intro line
   if(!['Shift','Meta','Alt','Control','CapsLock','Tab'].includes(e.key)) dismissIntroIfActive();
   keys[e.key]=true;
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
 });
+
 window.addEventListener('keyup',e=>{
   keys[e.key]=false;
   if(!keys['Enter'] && !keys[' ']){ if(justClosedDialog) justClosedDialog=false; }
 });
 
 function near(a,b){ return Math.hypot((a.x-b.x),(a.y-b.y))<18; }
-function tryMove(obj,dx,dy){ const nx=obj.x+dx, ny=obj.y+dy; const tx=Math.floor((nx+8)/T), ty=Math.floor((ny+14)/T); if(!blocked(tx,ty)){ obj.x=nx; obj.y=ny; } }
+function tryMove(obj,dx,dy){
+  const nx=obj.x+dx, ny=obj.y+dy;
+  const tx=Math.floor((nx+8)/T), ty=Math.floor((ny+14)/T);
+  if(!blocked(tx,ty)){ obj.x=nx; obj.y=ny; }
+}
 
-/* Audio */
+/* ===== Audio ===== */
 let audioCtx=null; let musicOn=false; let sfxOn=true; let musicTimer=null;
 function audio(){ if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
-function beep(freq=440, dur=0.08, type='square', vol=0.03){ if(!sfxOn) return; const ctxA=audio(); const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(ctxA.destination); o.start(); o.stop(ctxA.currentTime+dur); }
+function beep(freq=440, dur=0.08, type='square', vol=0.03){
+  if(!sfxOn) return; const ctxA=audio(); const o=ctxA.createOscillator(); const g=ctxA.createGain();
+  o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(ctxA.destination);
+  o.start(); o.stop(ctxA.currentTime+dur);
+}
 function playSfx(kind){ if(!sfxOn) return; if(kind==='menu') beep(740,0.06); else if(kind==='select') beep(520,0.12,'square',0.04); else if(kind==='back') beep(300,0.06,'triangle',0.03); }
-function startMusic(){ if(musicOn) return; musicOn=true; const ctxA=audio(); const tempo=120; const beat=60/tempo; const notes=[392,392,440,392,523,494, 392,392,440,392,587,523]; let i=0; (function tick(){ if(!musicOn) return; const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.type='triangle'; o.frequency.value=notes[i%notes.length]; g.gain.value=0.015; o.connect(g); g.connect(ctxA.destination); const now=ctxA.currentTime; o.start(now); o.stop(now+beat*0.35); i++; musicTimer=setTimeout(tick, beat*1000*0.5); })(); }
+function startMusic(){
+  if(musicOn) return; musicOn=true; const ctxA=audio(); const tempo=120; const beat=60/tempo;
+  const notes=[392,392,440,392,523,494, 392,392,440,392,587,523]; let i=0;
+  (function tick(){
+    if(!musicOn) return; const o=ctxA.createOscillator(); const g=ctxA.createGain();
+    o.type='triangle'; o.frequency.value=notes[i%notes.length]; g.gain.value=0.015; o.connect(g); g.connect(ctxA.destination);
+    const now=ctxA.currentTime; o.start(now); o.stop(now+beat*0.35); i++; musicTimer=setTimeout(tick, beat*1000*0.5);
+  })();
+}
 function stopMusic(){ musicOn=false; if(musicTimer){ clearTimeout(musicTimer); musicTimer=null; } }
 
 const sfxBtn=document.getElementById('sfxBtn');
@@ -222,36 +274,49 @@ const bgmBtn=document.getElementById('bgmBtn');
 sfxBtn.onclick=()=>{ sfxOn=!sfxOn; sfxBtn.textContent='SFX: '+(sfxOn?'On':'Off'); sfxBtn.setAttribute('aria-pressed', String(sfxOn)); if(sfxOn) playSfx('menu'); };
 bgmBtn.onclick=()=>{ if(musicOn){ stopMusic(); } else { startMusic(); } bgmBtn.textContent='Music: '+(musicOn?'On':'Off'); bgmBtn.setAttribute('aria-pressed', String(musicOn)); };
 
-/* Game loop */
+/* ===== Game loop ===== */
 let lastBlink=0, lastBlinkNpc=0, ticking=0, prev=performance.now();
 function update(dt){
   ticking+=dt;
   if(ticking-lastBlink>2000+Math.random()*1000){ player.blinkOn=true; lastBlink=ticking; setTimeout(()=>player.blinkOn=false,140); }
   if(ticking-lastBlinkNpc>2300+Math.random()*1200){ npc.blinkOn=true; lastBlinkNpc=ticking; setTimeout(()=>npc.blinkOn=false,140); }
+
   if(mode==='walk'){
     let moved=false;
     if(keys['ArrowUp']||keys['w']){ tryMove(player,0,-1.2); player.dir='up'; moved=true; }
     if(keys['ArrowDown']||keys['s']){ tryMove(player,0, 1.2); player.dir='down'; moved=true; }
     if(keys['ArrowLeft']||keys['a']){ tryMove(player,-1.2,0); player.dir='left'; moved=true; }
     if(keys['ArrowRight']||keys['d']){ tryMove(player, 1.2,0); player.dir='right'; moved=true; }
+
+    // Interaction only when near, Enter/Space, and not just closed
     if(!justClosedDialog && (keys['Enter']||keys[' ']) && near(player,npc)){
       openMenu(); keys['Enter']=keys[' ']=false;
     }
+
     if(moved && sfxOn && Math.random()<0.05) beep(880,0.02,'square',0.01);
+
   } else if(mode==='menu'){
     if(keys['ArrowUp']||keys['w']){ menuIndex=(menuIndex+QNA.length-1)%QNA.length; keys['ArrowUp']=keys['w']=false; playSfx('menu'); }
     if(keys['ArrowDown']||keys['s']){ menuIndex=(menuIndex+1)%QNA.length; keys['ArrowDown']=keys['s']=false; playSfx('menu'); }
     if(keys['Enter']||keys[' ']){ startQA(QNA[menuIndex]); keys['Enter']=keys[' ']=false; }
     if(keys['Escape']||keys['x']||keys['Backspace']){ closeMenu(); keys['Escape']=keys['x']=keys['Backspace']=false; }
+
   } else if(mode==='dialog'){
     const pg=dialog.pages[dialog.p];
-    if(!dialog.done){ dialog.i+=2; if(dialog.i>=pg.t.length){ dialog.i=pg.t.length; dialog.done=true; } }
+
+    if(!dialog.done){
+      dialog.i+=2;
+      if(dialog.i>=pg.t.length){ dialog.i=pg.t.length; dialog.done=true; }
+    }
+
     if(keys['Enter']||keys[' ']){
       if(!dialog.done){ dialog.i=pg.t.length; dialog.done=true; }
       else if(dialog.p<dialog.pages.length-1){ dialog.p++; dialog.i=0; dialog.done=false; }
       else { dialog=null; mode='walk'; justClosedDialog=true; }
       keys['Enter']=keys[' ']=false;
     }
+
+    // Back from any dialog (including intro) returns to walking, not the menu
     if(keys['Escape']||keys['x']||keys['Backspace']){
       dialog=null; mode='walk'; justClosedDialog=true;
       keys['Escape']=keys['x']=keys['Backspace']=false;
@@ -271,7 +336,7 @@ function render(){
 function loop(t){ const dt=t-prev; prev=t; update(dt); render(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
-/* Persistence */
+/* ===== Persistence ===== */
 const KEY='nick.virtual.interview.state.v1';
 function saveState(){ try{ localStorage.setItem(KEY, JSON.stringify({answered})); }catch{} }
 function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{answered:{}}; }catch{return {answered:{}}} }
@@ -282,17 +347,21 @@ resetBtn.addEventListener('click', ()=>{
   location.reload();
 });
 
-/* Intro dialog on load */
+/* ===== Intro dialog on load (dismissable by any input) ===== */
 window.addEventListener('load', ()=>{
   dialog={pages:[{s:'Nick',t:'Thanks for scanning. Walk up to the interviewer and press Enter to start.'}],p:0,i:0,done:false};
   mode='dialog';
-  introActive=true; // NEW
+  introActive=true;
 });
 
-/* Error overlay */
-window.addEventListener('error', (e)=>{ try{ const div=document.createElement('div'); div.style.position='fixed'; div.style.left='8px'; div.style.bottom='8px'; div.style.right='8px'; div.style.background='rgba(0,0,0,.85)'; div.style.color='#ffd166'; div.style.padding='8px 10px'; div.style.border='1px solid #7aa0c8'; div.style.font='12px monospace'; div.style.zIndex=9999; div.textContent='Error: '+e.message; document.body.appendChild(div);}catch{} });
+/* ===== Error overlay ===== */
+window.addEventListener('error', (e)=>{ try{
+  const div=document.createElement('div'); div.style.position='fixed'; div.style.left='8px'; div.style.bottom='8px'; div.style.right='8px';
+  div.style.background='rgba(0,0,0,.85)'; div.style.color='#ffd166'; div.style.padding='8px 10px'; div.style.border='1px solid #7aa0c8';
+  div.style.font='12px monospace'; div.style.zIndex=9999; div.textContent='Error: '+e.message; document.body.appendChild(div);
+}catch{} });
 
-/* On-screen controls -> virtual keys */
+/* ===== On-screen controls -> virtual keys ===== */
 const controlsRoot = document.querySelector('.mobileControls');
 
 function setKey(key, down){
@@ -343,13 +412,9 @@ controlsRoot.querySelectorAll('[data-key]').forEach(btn=>{
   });
 });
 
-// bonus: tap canvas to dismiss intro or trigger Enter
-c.addEventListener('pointerdown', ()=>{
-  if(introActive) dismissIntroIfActive();
-});
-document.addEventListener('dblclick', e=>{
-  if(e.target===c){ setKey('Enter', true); }
-});
+// Tap canvas to dismiss intro; double-tap still mapped to Enter
+c.addEventListener('pointerdown', ()=>{ if(introActive) dismissIntroIfActive(); });
+document.addEventListener('dblclick', e=>{ if(e.target===c){ setKey('Enter', true); }});
 </script>
 </body>
 </html>
