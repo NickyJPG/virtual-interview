@@ -5,54 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Nick John — Virtual Interview</title>
   <style>
-    body{margin:0;background:#0f1220;color:#f2f4fa;font:16px/1.4 system-ui}
-    header{padding:10px;background:#161a2b;color:#fff;font-weight:700;position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center}
+    :root{
+      --bg:#0f1220; --panel:#161a2b; --ink:#f2f4fa; --muted:#b7b9c8; --border:#2b2e45;
+      --accent:#7aa0c8; --cta:#1a1c2a; --ctaGrad1:#2b5d7a; --ctaGrad2:#1c3c50;
+      --glass:rgba(15,18,32,.55);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui;-webkit-font-smoothing:antialiased;touch-action:manipulation}
+    header{padding:10px;background:var(--panel);color:#fff;font-weight:700;position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center}
     .spacer{flex:1}
-    .pill{border:1px solid #2b2e45;background:#1a1c2a;color:#f2f4fa;border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
+    .pill{border:1px solid var(--border);background:#1a1c2a;color:var(--ink);border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
     .wrap{display:flex;flex-direction:column;align-items:center;padding:12px}
-    canvas{width:100%;max-width:640px;image-rendering:pixelated;border:2px solid #2b2e45;border-radius:12px;background:#09101a}
-    .help{color:#b7b9c8;font-size:14px;font-weight:600;margin-top:6px;text-align:center}
-    footer{padding:12px 12px 80px;text-align:center} /* extra bottom pad so mobile controller doesn't overlap */
-    .cta{margin:4px;padding:10px 12px;border-radius:8px;background:#1a1c2a;color:#f2f4fa;text-decoration:none;display:inline-block}
-    .cta.primary{background:linear-gradient(180deg,#2b5d7a,#1c3c50)}
-
-    /* Mobile controller: hidden by default */
-    .mobile-pad { display:none; }
-
-    /* Show controller on small screens only */
-    @media (max-width: 768px) {
-      .mobile-pad {
-        position: fixed;
-        left: 50%;
-        bottom: 14px;
-        transform: translateX(-50%);
-        z-index: 50;
-        user-select: none;
-      }
-      .pad-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 56px);
-        grid-template-rows: repeat(3, 56px);
-        gap: 10px;
-        justify-content: center;
-        align-items: center;
-        background: rgba(15,18,32,0.72);
-        backdrop-filter: blur(8px);
-        padding: 12px;
-        border-radius: 14px;
-        border: 1px solid #2b2e45;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-      }
-      .pad-grid span { width:56px; height:56px; } /* spacers */
-      .ctrl {
-        width: 56px; height: 56px;
-        border: none; border-radius: 12px;
-        background: #1a1c2a; color:#f2f4fa;
-        font-size: 22px; line-height: 56px;
-        box-shadow: 0 2px 0 rgba(0,0,0,0.35);
-        touch-action: none;   /* prevent scroll on swipe */
-      }
-      .ctrl:active { transform: translateY(1px); }
+    canvas{width:100%;max-width:640px;image-rendering:pixelated;border:2px solid var(--border);border-radius:12px;background:#09101a}
+    .help{color:var(--muted);font-size:14px;font-weight:600;margin-top:6px;text-align:center}
+    footer{padding:12px;text-align:center}
+    .cta{margin:4px;padding:10px 12px;border-radius:8px;background:var(--cta);color:var(--ink);text-decoration:none;display:inline-block}
+    .cta.primary{background:linear-gradient(180deg,var(--ctaGrad1),var(--ctaGrad2))}
+    /* Mobile controls */
+    .mobileControls{
+      position:fixed; inset:auto 0 12px 0; pointer-events:none; z-index:10;
+      display:flex; justify-content:space-between; align-items:flex-end; padding:0 12px;
+    }
+    .cluster{pointer-events:auto; display:grid; gap:8px; opacity:.98}
+    .dpad{
+      grid-template-areas:
+        ".  up  ."
+        "left  .  right"
+        ". down .";
+      grid-template-columns:56px 56px 56px;
+      grid-template-rows:56px 56px 56px;
+    }
+    .btn{
+      width:56px; height:56px; border-radius:14px;
+      border:1px solid var(--border); background:var(--glass); backdrop-filter:blur(6px);
+      display:flex; align-items:center; justify-content:center; font:600 14px/1 system-ui; color:var(--ink);
+      user-select:none; -webkit-user-select:none; touch-action:none;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.big{width:72px;height:72px;border-radius:16px}
+    .btn.pill{width:auto; min-width:84px; padding:0 14px; height:56px; border-radius:999px}
+    .up{grid-area:up}
+    .down{grid-area:down}
+    .left{grid-area:left}
+    .right{grid-area:right}
+    .actions{display:flex; gap:12px}
+    .mobileControls{display:none}
+    @media (hover:none), (max-width: 860px){
+      .mobileControls{display:flex}
     }
   </style>
 </head>
@@ -64,35 +64,34 @@
   <button id="bgmBtn" class="pill" aria-pressed="false" type="button">Music: Off</button>
   <button id="reset" class="pill" type="button">Reset</button>
 </header>
+
 <div class="wrap">
   <canvas id="game" width="320" height="240"></canvas>
   <div class="help">Move with arrows/WASD. Press Enter or Space to talk. Esc to back.</div>
 </div>
+
 <footer>
   <a id="cvBtn" class="cta" target="_blank" rel="noopener">Download CV</a>
   <a id="liBtn" class="cta" target="_blank" rel="noopener">LinkedIn</a>
   <a id="emailBtn" class="cta primary">Email Nick</a>
 </footer>
 
-<!-- Mobile-only on-screen controls -->
-<div class="mobile-pad" aria-label="On-screen controls">
-  <div class="pad-grid">
-    <button class="ctrl" data-key="ArrowUp"    aria-label="Up">⬆️</button>
-    <span></span>
-    <button class="ctrl" data-key="Enter"      aria-label="Talk / Select">💬</button>
-
-    <button class="ctrl" data-key="ArrowLeft"  aria-label="Left">⬅️</button>
-    <button class="ctrl" data-key="ArrowDown"  aria-label="Down">⬇️</button>
-    <button class="ctrl" data-key="ArrowRight" aria-label="Right">➡️</button>
-
-    <button class="ctrl" data-key="Escape"     aria-label="Back">↩︎</button>
-    <span></span>
-    <button class="ctrl" data-key=" "          aria-label="Talk (Space)">⏯</button>
+<!-- On-screen Mobile Controls -->
+<div class="mobileControls" aria-hidden="false">
+  <div class="cluster dpad" aria-label="Movement controls">
+    <button class="btn up"    data-key="ArrowUp"    aria-label="Move up">▲</button>
+    <button class="btn left"  data-key="ArrowLeft"  aria-label="Move left">◀</button>
+    <button class="btn right" data-key="ArrowRight" aria-label="Move right">▶</button>
+    <button class="btn down"  data-key="ArrowDown"  aria-label="Move down">▼</button>
+  </div>
+  <div class="cluster actions" aria-label="Actions">
+    <button class="btn big pill" data-key="Enter" aria-label="Enter">Enter</button>
+    <button class="btn big pill" data-key="Escape" aria-label="Back">Back</button>
   </div>
 </div>
 
 <script>
-// ===== Profile & Copy =====
+/* Profile & Copy */
 const PROFILE={
   name:'Nick John',
   email:'mailto:nicholas.john@mail.com?subject=Reaching%20out%20from%20your%20QR',
@@ -114,13 +113,13 @@ const QNA=[
  {id:'contact', q:'How do we follow up?', a:'Use the buttons below — email, LinkedIn, or download my CV. Happy to share case studies and references.'}
 ];
 
-// ===== Canvas setup =====
+/* Canvas setup */
 const c=document.getElementById('game');
 const ctx=c.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const T=16, W=20, H=15; // 320x240
 
-// ===== Map (0=floor, 1=wall, 2=desk, 3=bookshelf, 4=vending, 5=plant, 6=cabinet, 7=chair) =====
+/* Map */
 const MAP=[
  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
  1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,6,0,5,0,1,
@@ -152,7 +151,7 @@ function drawCabinet(x,y){ ctx.fillStyle='#3b4a6b'; ctx.fillRect(x*T+1,y*T+1,T-2
 function drawChair(x,y){ ctx.fillStyle='#2a2f4a'; ctx.fillRect(x*T+3,y*T+9,10,6); ctx.fillStyle='#1f2440'; ctx.fillRect(x*T+5,y*T+6,6,3); }
 function drawTile(x,y,t){ drawFloor(x,y); if(t===1) drawWall(x,y); if(t===2) drawDesk(x,y); if(t===3) drawShelf(x,y); if(t===4) drawVending(x,y); if(t===5) drawPlant(x,y); if(t===6) drawCabinet(x,y); if(t===7) drawChair(x,y); }
 
-// ===== Sprites with idle blink and bounce =====
+/* Sprites */
 const player={x:5*T,y:8*T,dir:'down',speed:1.2,blinkOn:false};
 const npc={x:12*T,y:8*T,dir:'left',blinkOn:false};
 
@@ -170,11 +169,12 @@ function drawChibi(kind,x,y,dir,blinkOn,tick){
   ctx.fillStyle='#000'; ctx.fillRect(x+4+step,y+22-bob,3,2); ctx.fillRect(x+9-step,y+22-bob,3,2);
 }
 
-// ===== Dialog & Menu =====
+/* Dialog & Menu */
 let mode='walk'; // walk | menu | dialog
 let menuIndex=0; let answered={};
 let dialog=null; // {pages:[{s,t}], p, i, done}
-let justClosedDialog=false; // prevents immediate menu open on Enter
+let justClosedDialog=false;
+let introActive=false; // NEW: true only for the very first line
 
 function openMenu(){ mode='menu'; menuIndex=0; playSfx('menu'); }
 function closeMenu(){ mode='walk'; playSfx('back'); }
@@ -183,16 +183,33 @@ function startQA(item){ dialog={pages:[{s:'Interviewer',t:item.q},{s:PROFILE.nam
 function drawMenu(){ const w=c.width-60,h=QNA.length*16+28,x=30,y=24; ctx.fillStyle='rgba(0,0,0,.9)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#d9e7ff'; ctx.font='12px monospace'; ctx.fillText('Choose a topic', x+10, y+16); QNA.forEach((it,i)=>{ const yy=y+30+i*16; ctx.fillStyle=i===menuIndex?'#ffd166':'#d9e7ff'; ctx.fillText((i===menuIndex?'> ':'  ')+it.q, x+10, yy); }); const count=Object.keys(answered).length+'/'+QNA.length; ctx.fillStyle='#9fb6d6'; ctx.fillText(count, x+w-34, y+16); }
 
 function drawDialog(){ const x=6,y=c.height-78,w=c.width-12,h=72; ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#fff'; ctx.font='12px monospace'; const pg=dialog.pages[dialog.p]; ctx.fillText(pg.s+':', x+8, y+16); wrapText(pg.t.slice(0,dialog.i), x+8, y+30, w-16, 14); if(dialog.done){ const t=Date.now()>>7; if(t%2) ctx.fillText('▶', x+w-22, y+h-10); } }
+
 function wrapText(t,x,y,maxW,lh){ const words=t.split(' '); let line=''; for(const w of words){const test=line+w+' '; if(ctx.measureText(test).width>maxW){ ctx.fillText(line,x,y); line=w+' '; y+=lh; } else line=test;} ctx.fillText(line,x,y); }
 
-// ===== Controls =====
-const keys={};
-window.addEventListener('keydown',e=>{ keys[e.key]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();});
-window.addEventListener('keyup',e=>{ keys[e.key]=false; if(!keys['Enter'] && !keys[' ']){ if(justClosedDialog) justClosedDialog=false; }});
+/* Controls */
+const keys=Object.create(null);
+
+function dismissIntroIfActive(){
+  if(introActive && dialog){
+    dialog=null; mode='walk'; introActive=false; justClosedDialog=true;
+  }
+}
+
+window.addEventListener('keydown',e=>{
+  // Any key during the very first intro line dismisses it
+  if(!['Shift','Meta','Alt','Control','CapsLock','Tab'].includes(e.key)) dismissIntroIfActive();
+  keys[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+});
+window.addEventListener('keyup',e=>{
+  keys[e.key]=false;
+  if(!keys['Enter'] && !keys[' ']){ if(justClosedDialog) justClosedDialog=false; }
+});
+
 function near(a,b){ return Math.hypot((a.x-b.x),(a.y-b.y))<18; }
 function tryMove(obj,dx,dy){ const nx=obj.x+dx, ny=obj.y+dy; const tx=Math.floor((nx+8)/T), ty=Math.floor((ny+14)/T); if(!blocked(tx,ty)){ obj.x=nx; obj.y=ny; } }
 
-// ===== Audio =====
+/* Audio */
 let audioCtx=null; let musicOn=false; let sfxOn=true; let musicTimer=null;
 function audio(){ if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
 function beep(freq=440, dur=0.08, type='square', vol=0.03){ if(!sfxOn) return; const ctxA=audio(); const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(ctxA.destination); o.start(); o.stop(ctxA.currentTime+dur); }
@@ -205,7 +222,7 @@ const bgmBtn=document.getElementById('bgmBtn');
 sfxBtn.onclick=()=>{ sfxOn=!sfxOn; sfxBtn.textContent='SFX: '+(sfxOn?'On':'Off'); sfxBtn.setAttribute('aria-pressed', String(sfxOn)); if(sfxOn) playSfx('menu'); };
 bgmBtn.onclick=()=>{ if(musicOn){ stopMusic(); } else { startMusic(); } bgmBtn.textContent='Music: '+(musicOn?'On':'Off'); bgmBtn.setAttribute('aria-pressed', String(musicOn)); };
 
-// ===== Game loop =====
+/* Game loop */
 let lastBlink=0, lastBlinkNpc=0, ticking=0, prev=performance.now();
 function update(dt){
   ticking+=dt;
@@ -217,7 +234,6 @@ function update(dt){
     if(keys['ArrowDown']||keys['s']){ tryMove(player,0, 1.2); player.dir='down'; moved=true; }
     if(keys['ArrowLeft']||keys['a']){ tryMove(player,-1.2,0); player.dir='left'; moved=true; }
     if(keys['ArrowRight']||keys['d']){ tryMove(player, 1.2,0); player.dir='right'; moved=true; }
-    // Interaction only on Enter or Space and only if we didn't just close a dialog
     if(!justClosedDialog && (keys['Enter']||keys[' ']) && near(player,npc)){
       openMenu(); keys['Enter']=keys[' ']=false;
     }
@@ -233,10 +249,13 @@ function update(dt){
     if(keys['Enter']||keys[' ']){
       if(!dialog.done){ dialog.i=pg.t.length; dialog.done=true; }
       else if(dialog.p<dialog.pages.length-1){ dialog.p++; dialog.i=0; dialog.done=false; }
-      else { dialog=null; mode='walk'; justClosedDialog=true; } // set guard so Enter doesn't open menu instantly
+      else { dialog=null; mode='walk'; justClosedDialog=true; }
       keys['Enter']=keys[' ']=false;
     }
-    if(keys['Escape']||keys['x']||keys['Backspace']){ dialog=null; mode='menu'; keys['Escape']=keys['x']=keys['Backspace']=false; }
+    if(keys['Escape']||keys['x']||keys['Backspace']){
+      dialog=null; mode='walk'; justClosedDialog=true;
+      keys['Escape']=keys['x']=keys['Backspace']=false;
+    }
   }
 }
 
@@ -252,61 +271,85 @@ function render(){
 function loop(t){ const dt=t-prev; prev=t; update(dt); render(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
-// ===== Persistence =====
+/* Persistence */
 const KEY='nick.virtual.interview.state.v1';
 function saveState(){ try{ localStorage.setItem(KEY, JSON.stringify({answered})); }catch{} }
 function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{answered:{}}; }catch{return {answered:{}}} }
 answered = loadState().answered || {};
-
 const resetBtn=document.getElementById('reset');
 resetBtn.addEventListener('click', ()=>{
   try{ answered={}; localStorage.removeItem(KEY); }catch(e){}
   location.reload();
 });
 
-// Always play the intro dialog on load for consistency
+/* Intro dialog on load */
 window.addEventListener('load', ()=>{
   dialog={pages:[{s:'Nick',t:'Thanks for scanning. Walk up to the interviewer and press Enter to start.'}],p:0,i:0,done:false};
   mode='dialog';
+  introActive=true; // NEW
 });
 
-// --- Mobile on-screen controls -> reuse the same keys map ---
-(function setupMobilePad(){
-  const pad = document.querySelector('.mobile-pad');
-  if (!pad) return;
-
-  const press = (k) => { keys[k] = true; };
-  const release = (k) => { keys[k] = false; };
-
-  pad.addEventListener('contextmenu', e => e.preventDefault(), {passive:false});
-
-  pad.querySelectorAll('.ctrl').forEach(btn => {
-    const k = btn.dataset.key;
-
-    btn.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      btn.setPointerCapture?.(e.pointerId);
-      press(k);
-    });
-    btn.addEventListener('pointerup', (e) => {
-      e.preventDefault();
-      release(k);
-    });
-    btn.addEventListener('pointercancel', () => release(k));
-    btn.addEventListener('pointerleave',  () => release(k));
-  });
-
-  // Safety: release all when visibility changes
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Escape',' ']
-        .forEach(k=>keys[k]=false);
-    }
-  });
-})();
-
-// Runtime error overlay (handy on mobile)
+/* Error overlay */
 window.addEventListener('error', (e)=>{ try{ const div=document.createElement('div'); div.style.position='fixed'; div.style.left='8px'; div.style.bottom='8px'; div.style.right='8px'; div.style.background='rgba(0,0,0,.85)'; div.style.color='#ffd166'; div.style.padding='8px 10px'; div.style.border='1px solid #7aa0c8'; div.style.font='12px monospace'; div.style.zIndex=9999; div.textContent='Error: '+e.message; document.body.appendChild(div);}catch{} });
+
+/* On-screen controls -> virtual keys */
+const controlsRoot = document.querySelector('.mobileControls');
+
+function setKey(key, down){
+  try{ audio(); }catch{}
+  // Any control press should dismiss the very first intro line
+  dismissIntroIfActive();
+
+  if(key==='Enter' || key==='Escape' || key===' '){
+    keys[key]=down;
+    if(down){
+      setTimeout(()=>{
+        keys[key]=false;
+        if(key==='Enter' || key===' '){ justClosedDialog=false; }
+      }, 140);
+    } else {
+      if(key==='Enter' || key===' '){ justClosedDialog=false; }
+    }
+  } else {
+    keys[key]=down;
+  }
+}
+
+// prevent page scroll while using controls
+['touchstart','touchmove'].forEach(ev=>{
+  document.addEventListener(ev, e=>{
+    if(e.target.closest('.mobileControls')) e.preventDefault();
+  }, {passive:false});
+});
+
+// pointer events for controls
+controlsRoot.querySelectorAll('[data-key]').forEach(btn=>{
+  const k = btn.getAttribute('data-key');
+  btn.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    btn.setPointerCapture?.(e.pointerId);
+    setKey(k, true);
+    btn.classList.add('active');
+  });
+  btn.addEventListener('pointerup', e=>{
+    e.preventDefault();
+    setKey(k, false);
+    btn.releasePointerCapture?.(e.pointerId);
+    btn.classList.remove('active');
+  });
+  btn.addEventListener('pointercancel', ()=>{
+    setKey(k, false);
+    btn.classList.remove('active');
+  });
+});
+
+// bonus: tap canvas to dismiss intro or trigger Enter
+c.addEventListener('pointerdown', ()=>{
+  if(introActive) dismissIntroIfActive();
+});
+document.addEventListener('dblclick', e=>{
+  if(e.target===c){ setKey('Enter', true); }
+});
 </script>
 </body>
 </html>
