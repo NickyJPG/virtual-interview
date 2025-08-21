@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Nick John — Virtual Interview</title>
+  <style>
+    body{margin:0;background:#0f1220;color:#f2f4fa;font:16px/1.4 system-ui}
+    header{padding:10px;background:#161a2b;color:#fff;font-weight:700;position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center}
+    .spacer{flex:1}
+    .pill{border:1px solid #2b2e45;background:#1a1c2a;color:#f2f4fa;border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
+    .wrap{display:flex;flex-direction:column;align-items:center;padding:12px}
+    canvas{width:100%;max-width:640px;image-rendering:pixelated;border:2px solid #2b2e45;border-radius:12px;background:#09101a}
+    .help{color:#b7b9c8;font-size:14px;font-weight:600;margin-top:6px;text-align:center}
+    footer{padding:12px;text-align:center}
+    .cta{margin:4px;padding:10px 12px;border-radius:8px;background:#1a1c2a;color:#f2f4fa;text-decoration:none;display:inline-block}
+    .cta.primary{background:linear-gradient(180deg,#2b5d7a,#1c3c50)}
+  </style>
+</head>
+<body>
+<header>
+  <div>Nick John — Virtual Interview</div>
+  <div class="spacer"></div>
+  <button id="sfxBtn" class="pill" aria-pressed="true" type="button">SFX: On</button>
+  <button id="bgmBtn" class="pill" aria-pressed="false" type="button">Music: Off</button>
+  <button id="reset" class="pill" type="button">Reset</button>
+</header>
+<div class="wrap">
+  <canvas id="game" width="320" height="240"></canvas>
+  <div class="help">Move with arrows/WASD. Press Enter or Space to talk. Esc to back.</div>
+</div>
+<footer>
+  <a id="cvBtn" class="cta" target="_blank" rel="noopener">Download CV</a>
+  <a id="liBtn" class="cta" target="_blank" rel="noopener">LinkedIn</a>
+  <a id="emailBtn" class="cta primary">Email Nick</a>
+</footer>
+<script>
+// ===== Profile & Copy =====
+const PROFILE={
+  name:'Nick John',
+  email:'mailto:nicholas.john@mail.com?subject=Reaching%20out%20from%20your%20QR',
+  linkedin:'https://www.linkedin.com/in/npjohn',
+  resumeUrl:'https://drive.google.com/file/d/1wdmHYK8QOXJNylYQvGMyG7u_4QXZ_4NZ/view?usp=sharing'
+};
+const cvBtn=document.getElementById('cvBtn');
+const liBtn=document.getElementById('liBtn');
+const emailBtn=document.getElementById('emailBtn');
+cvBtn.href=PROFILE.resumeUrl; liBtn.href=PROFILE.linkedin; emailBtn.href=PROFILE.email;
+
+const QNA=[
+ {id:'bio', q:'Who are you?', a:"I'm Nick, an Account Director in Sydney. I’ve led integrated campaigns for Dettol, Vodafone and Heineken at Saatchi & Saatchi."},
+ {id:'work', q:'Favourite campaigns?', a:"Dettol 'Spread Love, Not Germs'; Vodafone #FindGary; Heineken 'Celebrate Whatever You Call Us'."},
+ {id:'style', q:'Work style?', a:'Clear guardrails, focused simplification and fast feedback. Protect thinking time and stop scope creep early.'},
+ {id:'prod', q:'Production approach?', a:'Plan tight, flag risks early and keep stakeholders close. Shoots run smooth and edits land on time.'},
+ {id:'fit', q:'Why hire you?', a:"I care about the work, the people and the impact — that’s what drives me."},
+ {id:'life', q:'Outside of work?', a:"Guitar, gaming and art. I’m a Champion member at AGNSW. Currently replaying Baldur’s Gate 3."},
+ {id:'contact', q:'How do we follow up?', a:'Use the buttons below — email, LinkedIn, or download my CV. Happy to share case studies and references.'}
+];
+
+// ===== Canvas setup =====
+const c=document.getElementById('game');
+const ctx=c.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const T=16, W=20, H=15; // 320x240
+
+// ===== Map (0=floor, 1=wall, 2=desk, 3=bookshelf, 4=vending, 5=plant, 6=cabinet, 7=chair) =====
+const MAP=[
+ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+ 1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,6,0,5,0,1,
+ 1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,6,0,5,0,1,
+ 1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,6,0,0,0,1,
+ 1,0,0,0,0,0,0,7,2,2,2,7,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+];
+
+function tileAt(tx,ty){ if(tx<0||ty<0||tx>=W||ty>=H) return 1; return MAP[ty*W+tx]; }
+function blocked(tx,ty){ const t=tileAt(tx,ty); return t===1||t===2||t===3||t===4||t===6; }
+
+function drawFloor(x,y){ ctx.fillStyle=((x+y)%2)?'#18263c':'#132139'; ctx.fillRect(x*T,y*T,T,T); }
+function drawWall(x,y){ ctx.fillStyle='#2b2e45'; ctx.fillRect(x*T,y*T,T,T); ctx.fillStyle='#3b3f63'; ctx.fillRect(x*T,y*T, T,4); }
+function drawDesk(x,y){ ctx.fillStyle='#3a3f60'; ctx.fillRect(x*T,y*T,T,T); ctx.fillStyle='#2c3150'; ctx.fillRect(x*T+1,y*T+9,T-2,6); ctx.fillStyle='#a9b7ff'; ctx.fillRect(x*T+4,y*T+4,8,3); ctx.fillStyle='#d6d6d6'; ctx.fillRect(x*T+12,y*T+5,3,2);} 
+function drawShelf(x,y){ ctx.fillStyle='#4b402e'; ctx.fillRect(x*T+1,y*T+1,T-2,T-2); ['#ffd166','#6ad2ff','#8fff9b','#ff9bd3'].forEach((col,i)=>{ ctx.fillStyle=col; ctx.fillRect(x*T+3,y*T+3+i*3,T-6,2); }); }
+function drawVending(x,y){ ctx.fillStyle='#1b5fa6'; ctx.fillRect(x*T+1,y*T+1,T-2,T-2); ctx.fillStyle='#9bd3ff'; ctx.fillRect(x*T+3,y*T+3,T-6,10); for(let r=0;r<3;r++){ for(let c=0;c<3;c++){ ctx.fillStyle=['#ffd166','#6ad2ff','#8fff9b'][(r+c)%3]; ctx.fillRect(x*T+4+c*3,y*T+4+r*3,2,2); } } ctx.fillStyle='#111'; ctx.fillRect(x*T+6,y*T+14,4,2); }
+function drawPlant(x,y){ ctx.fillStyle='#225f43'; ctx.beginPath(); ctx.arc(x*T+8,y*T+9,6,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#3f3428'; ctx.fillRect(x*T+6,y*T+13,4,3); }
+function drawCabinet(x,y){ ctx.fillStyle='#3b4a6b'; ctx.fillRect(x*T+1,y*T+1,T-2,T-2); ctx.fillStyle='#cfe3ff'; ctx.fillRect(x*T+4,y*T+6,8,2); ctx.fillRect(x*T+4,y*T+10,8,2); }
+function drawChair(x,y){ ctx.fillStyle='#2a2f4a'; ctx.fillRect(x*T+3,y*T+9,10,6); ctx.fillStyle='#1f2440'; ctx.fillRect(x*T+5,y*T+6,6,3); }
+function drawTile(x,y,t){ drawFloor(x,y); if(t===1) drawWall(x,y); if(t===2) drawDesk(x,y); if(t===3) drawShelf(x,y); if(t===4) drawVending(x,y); if(t===5) drawPlant(x,y); if(t===6) drawCabinet(x,y); if(t===7) drawChair(x,y); }
+
+// ===== Sprites with idle blink and bounce =====
+const player={x:5*T,y:8*T,dir:'down',speed:1.2,blinkOn:false};
+const npc={x:12*T,y:8*T,dir:'left',blinkOn:false};
+
+function drawChibi(kind,x,y,dir,blinkOn,tick){
+  const skin='#ffd7b3', hair= kind==='nick' ? '#2b2b2b' : '#3a2b1f';
+  const body= kind==='nick' ? '#1f6feb' : '#ff8c42';
+  const bob = 1+Math.sin(tick/300)*1.2;
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x+8,y+23,6,2,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=body; ctx.fillRect(x+3,y+10-bob,10,9);
+  ctx.fillStyle=skin; ctx.fillRect(x+3,y+2-bob,10,7);
+  ctx.fillStyle=hair; ctx.fillRect(x+3,y+2-bob,10,3);
+  ctx.fillStyle='#111'; if(blinkOn){ ctx.fillRect(x+5,y+6-bob,3,1); ctx.fillRect(x+9,y+6-bob,3,1);} else { ctx.fillRect(x+6,y+5-bob,1,1); ctx.fillRect(x+10,y+5-bob,1,1);} 
+  ctx.fillStyle=body; ctx.fillRect(x+2,y+12-bob,2,5); ctx.fillRect(x+12,y+12-bob,2,5);
+  const step=Math.floor((tick/120)%2); ctx.fillRect(x+4+step,y+19-bob,3,4); ctx.fillRect(x+9-step,y+19-bob,3,4);
+  ctx.fillStyle='#000'; ctx.fillRect(x+4+step,y+22-bob,3,2); ctx.fillRect(x+9-step,y+22-bob,3,2);
+}
+
+// ===== Dialog & Menu =====
+let mode='walk'; // walk | menu | dialog
+let menuIndex=0; let answered={};
+let dialog=null; // {pages:[{s,t}], p, i, done}
+let justClosedDialog=false; // prevents immediate menu open on Enter
+
+function openMenu(){ mode='menu'; menuIndex=0; playSfx('menu'); }
+function closeMenu(){ mode='walk'; playSfx('back'); }
+function startQA(item){ dialog={pages:[{s:'Interviewer',t:item.q},{s:PROFILE.name,t:item.a}],p:0,i:0,done:false}; mode='dialog'; answered[item.id||item.q]=true; saveState(); playSfx('select'); }
+
+function drawMenu(){ const w=c.width-60,h=QNA.length*16+28,x=30,y=24; ctx.fillStyle='rgba(0,0,0,.9)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#d9e7ff'; ctx.font='12px monospace'; ctx.fillText('Choose a topic', x+10, y+16); QNA.forEach((it,i)=>{ const yy=y+30+i*16; ctx.fillStyle=i===menuIndex?'#ffd166':'#d9e7ff'; ctx.fillText((i===menuIndex?'> ':'  ')+it.q, x+10, yy); }); const count=Object.keys(answered).length+'/'+QNA.length; ctx.fillStyle='#9fb6d6'; ctx.fillText(count, x+w-34, y+16); }
+
+function drawDialog(){ const x=6,y=c.height-78,w=c.width-12,h=72; ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.fillStyle='#fff'; ctx.font='12px monospace'; const pg=dialog.pages[dialog.p]; ctx.fillText(pg.s+':', x+8, y+16); wrapText(pg.t.slice(0,dialog.i), x+8, y+30, w-16, 14); if(dialog.done){ const t=Date.now()>>7; if(t%2) ctx.fillText('▶', x+w-22, y+h-10); } }
+function wrapText(t,x,y,maxW,lh){ const words=t.split(' '); let line=''; for(const w of words){const test=line+w+' '; if(ctx.measureText(test).width>maxW){ ctx.fillText(line,x,y); line=w+' '; y+=lh; } else line=test;} ctx.fillText(line,x,y); }
+
+// ===== Controls =====
+const keys={};
+window.addEventListener('keydown',e=>{ keys[e.key]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();});
+window.addEventListener('keyup',e=>{ keys[e.key]=false; if(!keys['Enter'] && !keys[' ']){ if(justClosedDialog) justClosedDialog=false; }});
+function near(a,b){ return Math.hypot((a.x-b.x),(a.y-b.y))<18; }
+function tryMove(obj,dx,dy){ const nx=obj.x+dx, ny=obj.y+dy; const tx=Math.floor((nx+8)/T), ty=Math.floor((ny+14)/T); if(!blocked(tx,ty)){ obj.x=nx; obj.y=ny; } }
+
+// ===== Audio =====
+let audioCtx=null; let musicOn=false; let sfxOn=true; let musicTimer=null;
+function audio(){ if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
+function beep(freq=440, dur=0.08, type='square', vol=0.03){ if(!sfxOn) return; const ctxA=audio(); const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(ctxA.destination); o.start(); o.stop(ctxA.currentTime+dur); }
+function playSfx(kind){ if(!sfxOn) return; if(kind==='menu') beep(740,0.06); else if(kind==='select') beep(520,0.12,'square',0.04); else if(kind==='back') beep(300,0.06,'triangle',0.03); }
+function startMusic(){ if(musicOn) return; musicOn=true; const ctxA=audio(); const tempo=120; const beat=60/tempo; const notes=[392,392,440,392,523,494, 392,392,440,392,587,523]; let i=0; (function tick(){ if(!musicOn) return; const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.type='triangle'; o.frequency.value=notes[i%notes.length]; g.gain.value=0.015; o.connect(g); g.connect(ctxA.destination); const now=ctxA.currentTime; o.start(now); o.stop(now+beat*0.35); i++; musicTimer=setTimeout(tick, beat*1000*0.5); })(); }
+function stopMusic(){ musicOn=false; if(musicTimer){ clearTimeout(musicTimer); musicTimer=null; } }
+
+const sfxBtn=document.getElementById('sfxBtn');
+const bgmBtn=document.getElementById('bgmBtn');
+sfxBtn.onclick=()=>{ sfxOn=!sfxOn; sfxBtn.textContent='SFX: '+(sfxOn?'On':'Off'); sfxBtn.setAttribute('aria-pressed', String(sfxOn)); if(sfxOn) playSfx('menu'); };
+bgmBtn.onclick=()=>{ if(musicOn){ stopMusic(); } else { startMusic(); } bgmBtn.textContent='Music: '+(musicOn?'On':'Off'); bgmBtn.setAttribute('aria-pressed', String(musicOn)); };
+
+// ===== Game loop =====
+let lastBlink=0, lastBlinkNpc=0, ticking=0, prev=performance.now();
+function update(dt){
+  ticking+=dt;
+  if(ticking-lastBlink>2000+Math.random()*1000){ player.blinkOn=true; lastBlink=ticking; setTimeout(()=>player.blinkOn=false,140); }
+  if(ticking-lastBlinkNpc>2300+Math.random()*1200){ npc.blinkOn=true; lastBlinkNpc=ticking; setTimeout(()=>npc.blinkOn=false,140); }
+  if(mode==='walk'){
+    let moved=false;
+    if(keys['ArrowUp']||keys['w']){ tryMove(player,0,-1.2); player.dir='up'; moved=true; }
+    if(keys['ArrowDown']||keys['s']){ tryMove(player,0, 1.2); player.dir='down'; moved=true; }
+    if(keys['ArrowLeft']||keys['a']){ tryMove(player,-1.2,0); player.dir='left'; moved=true; }
+    if(keys['ArrowRight']||keys['d']){ tryMove(player, 1.2,0); player.dir='right'; moved=true; }
+    // Interaction only on Enter or Space and only if we didn't just close a dialog
+    if(!justClosedDialog && (keys['Enter']||keys[' ']) && near(player,npc)){
+      openMenu(); keys['Enter']=keys[' ']=false;
+    }
+    if(moved && sfxOn && Math.random()<0.05) beep(880,0.02,'square',0.01);
+  } else if(mode==='menu'){
+    if(keys['ArrowUp']||keys['w']){ menuIndex=(menuIndex+QNA.length-1)%QNA.length; keys['ArrowUp']=keys['w']=false; playSfx('menu'); }
+    if(keys['ArrowDown']||keys['s']){ menuIndex=(menuIndex+1)%QNA.length; keys['ArrowDown']=keys['s']=false; playSfx('menu'); }
+    if(keys['Enter']||keys[' ']){ startQA(QNA[menuIndex]); keys['Enter']=keys[' ']=false; }
+    if(keys['Escape']||keys['x']||keys['Backspace']){ closeMenu(); keys['Escape']=keys['x']=keys['Backspace']=false; }
+  } else if(mode==='dialog'){
+    const pg=dialog.pages[dialog.p];
+    if(!dialog.done){ dialog.i+=2; if(dialog.i>=pg.t.length){ dialog.i=pg.t.length; dialog.done=true; } }
+    if(keys['Enter']||keys[' ']){
+      if(!dialog.done){ dialog.i=pg.t.length; dialog.done=true; }
+      else if(dialog.p<dialog.pages.length-1){ dialog.p++; dialog.i=0; dialog.done=false; }
+      else { dialog=null; mode='walk'; justClosedDialog=true; } // set guard so Enter doesn't open menu instantly
+      keys['Enter']=keys[' ']=false;
+    }
+    if(keys['Escape']||keys['x']||keys['Backspace']){ dialog=null; mode='menu'; keys['Escape']=keys['x']=keys['Backspace']=false; }
+  }
+}
+
+function render(){
+  for(let y=0;y<H;y++){ for(let x=0;x<W;x++){ drawTile(x,y, MAP[y*W+x]); }}
+  drawChibi('nick', Math.floor(player.x), Math.floor(player.y), player.dir, player.blinkOn, performance.now());
+  drawChibi('npc',  Math.floor(npc.x),    Math.floor(npc.y),    'left', npc.blinkOn, performance.now());
+  if(mode==='walk' && near(player,npc)){ ctx.fillStyle='#cfe3ff'; ctx.font='10px monospace'; ctx.fillText('Press Enter or Space to talk', 8, 14); }
+  if(mode==='menu') drawMenu();
+  if(mode==='dialog') drawDialog();
+}
+
+function loop(t){ const dt=t-prev; prev=t; update(dt); render(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ===== Persistence =====
+const KEY='nick.virtual.interview.state.v1';
+function saveState(){ try{ localStorage.setItem(KEY, JSON.stringify({answered})); }catch{} }
+function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{answered:{}}; }catch{return {answered:{}}} }
+answered = loadState().answered || {};
+
+const resetBtn=document.getElementById('reset');
+resetBtn.addEventListener('click', ()=>{
+  try{ answered={}; localStorage.removeItem(KEY); }catch(e){}
+  location.reload();
+});
+
+// Always play the intro dialog on load for consistency
+window.addEventListener('load', ()=>{
+  dialog={pages:[{s:'Nick',t:'Thanks for scanning. Walk up to the interviewer and press Enter to start.'}],p:0,i:0,done:false};
+  mode='dialog';
+});
+
+// Runtime error overlay (handy on mobile)
+window.addEventListener('error', (e)=>{ try{ const div=document.createElement('div'); div.style.position='fixed'; div.style.left='8px'; div.style.bottom='8px'; div.style.right='8px'; div.style.background='rgba(0,0,0,.85)'; div.style.color='#ffd166'; div.style.padding='8px 10px'; div.style.border='1px solid #7aa0c8'; div.style.font='12px monospace'; div.style.zIndex=9999; div.textContent='Error: '+e.message; document.body.appendChild(div);}catch{} });
+</script>
+</body>
+</html>
