@@ -108,9 +108,9 @@ const QNA=[
  {id:'work', q:'Favourite campaigns?', a:"Dettol 'Spread Love, Not Germs'; Vodafone #FindGary; Heineken 'Celebrate Whatever You Call Us'."},
  {id:'style', q:'Work style?', a:'Clear guardrails, focused simplification and fast feedback. Protect thinking time and stop scope creep early.'},
  {id:'prod', q:'Production approach?', a:'Plan tight, flag risks early and keep stakeholders close. Shoots run smooth and edits land on time.'},
- {id:'fit', q:'Why hire you?', a:"I care about the work, the people and the impact — that’s what drives me."},
- {id:'life', q:'Outside of work?', a:"Guitar, gaming and art. I’m a Champion member at AGNSW. Currently replaying Baldur’s Gate 3."},
- {id:'contact', q:'How do we follow up?', a:'Use the buttons below — email, LinkedIn, or download my CV. Happy to share case studies and references.'}
+ {id:'fit', q:'Why hire you?', a:"I care about the work, the people and the impact. That is what drives me."},
+ {id:'life', q:'Outside of work?', a:"Guitar, gaming and art. I am a Champion member at AGNSW. Currently replaying Baldur’s Gate 3."},
+ {id:'contact', q:'How do we follow up?', a:'Use the buttons below. Email, LinkedIn, or download my CV. Happy to share case studies and references.'}
 ];
 
 /* ===== Canvas setup ===== */
@@ -157,7 +157,7 @@ const npc={x:12*T,y:8*T,dir:'left',blinkOn:false};
 
 function drawChibi(kind,x,y,dir,blinkOn,tick){
   const skin='#ffd7b3', hair= kind==='nick' ? '#2b2b2b' : '#3a2b1f';
-  const body= kind==='nick' ? '#1f6feb' : '#ff8c42';
+  const body= kind==='nick' ? '#1f6feb' : '#ff8c42'; // colours used for labels below
   const bob = 1+Math.sin(tick/300)*1.2;
   ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x+8,y+23,6,2,0,0,Math.PI*2); ctx.fill();
   ctx.fillStyle=body; ctx.fillRect(x+3,y+10-bob,10,9);
@@ -180,9 +180,9 @@ function openMenu(){ mode='menu'; menuIndex=0; playSfx('menu'); }
 function closeMenu(){ mode='walk'; playSfx('back'); }
 function startQA(item){ dialog={pages:[{s:'Interviewer',t:item.q},{s:PROFILE.name,t:item.a}],p:0,i:0,done:false}; mode='dialog'; answered[item.id||item.q]=true; saveState(); playSfx('select'); }
 
-/* ===== Dialogue drawing with different font sizes ===== */
-const LABEL_FONT='12px monospace';   // unchanged
-const TEXT_FONT='11px monospace';    // slightly smaller to avoid clipping
+/* ===== Dialogue drawing with label colours and smaller body text ===== */
+const LABEL_FONT='12px monospace';
+const TEXT_FONT='11px monospace';
 
 function drawMenu(){
   const w=c.width-60,h=QNA.length*16+28,x=30,y=24;
@@ -200,14 +200,21 @@ function drawDialog(){
   ctx.strokeStyle='#7aa0c8'; ctx.strokeRect(x+1,y+1,w-2,h-2);
   const pg=dialog.pages[dialog.p];
 
-  // Speaker label
-  ctx.fillStyle='#fff';
+  // Speaker label colour selection
+  let labelColor = '#ffffff';
+  if (pg.s === 'Interviewer') labelColor = '#ff8c42';                 // interviewer orange
+  if (pg.s === PROFILE.name || pg.s === 'Nick' || pg.s === 'Nick John') labelColor = '#1f6feb'; // Nick blue
+
+  // Label
   ctx.font = LABEL_FONT;
+  ctx.fillStyle = labelColor;
   ctx.fillText(pg.s+':', x+8, y+16);
 
-  // Spoken text (slightly smaller)
+  // Body text
   ctx.font = TEXT_FONT;
+  ctx.fillStyle = '#ffffff';
   wrapText(pg.t.slice(0,dialog.i), x+8, y+30, w-16, 14);
+
   if(dialog.done){ const t=Date.now()>>7; if(t%2) ctx.fillText('▶', x+w-22, y+h-10); }
 }
 
@@ -316,7 +323,7 @@ function update(dt){
       keys['Enter']=keys[' ']=false;
     }
 
-    // Back from any dialog (including intro) returns to walking, not the menu
+    // Back from any dialog (including intro) returns to walking
     if(keys['Escape']||keys['x']||keys['Backspace']){
       dialog=null; mode='walk'; justClosedDialog=true;
       keys['Escape']=keys['x']=keys['Backspace']=false;
